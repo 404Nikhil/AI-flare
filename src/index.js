@@ -48,8 +48,23 @@ app.get('/', async (c) => {
 
 
 app.get("/embeds", async (c) => {
-	const { results } = await c.env.DB.prepare("SELECT * FROM QA_repository").run();
+	const { results } = await c.env.DB.prepare("SELECT * FROM TABLE_NAME").run();
 	return c.json(JSON.stringify(results));
+})
+
+
+app.delete("/embeds/:id", async (c) => {
+	const id = c.req.param('id');
+	if (!id) {
+		return c.text("Missing id parameter", 400);
+	}
+	const { success } = await c.env.DB.prepare(`DELETE FROM TABLE_NAME WHERE id = ?`)
+		.bind(id).run()
+
+	if (!success) {
+		return c.text("Something went wrong", 500)
+	}
+	return c.text("deleted", 200)
 })
 
 export default app
