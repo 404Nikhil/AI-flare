@@ -46,4 +46,10 @@ app.get('/', async (c) => {
 	return c.text(answer);
 })
 
+
+app.get("/embeds", async (c) => {
+	const { results } = await c.env.DB.prepare("SELECT * FROM QA_repository").run();
+	return c.json(JSON.stringify(results));
+})
+
 export default app
