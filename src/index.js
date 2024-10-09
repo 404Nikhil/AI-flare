@@ -67,4 +67,40 @@ app.delete("/embeds/:id", async (c) => {
 	return c.text("deleted", 200)
 })
 
+
+app.put("/embeds/:id", async (c) => {
+	const id = c.req.param('id');
+	if (!id) {
+		return c.text("Missing id parameter", 400);
+	}
+	const ai = new Ai(c.env.AI)
+	const { answer, question } = await c.req.json();
+	if (!answer) {
+		return c.json("Missing answer", 400);
+	}
+	const { success } = await c.env.DB.prepare(`UPDATE TABLE_NAME SET answer = ? WHERE id = ?`)
+		.bind(answer, id).run()
+
+	if (!success) {
+		return c.text("Something went wrong", 500)
+	}
+
+	const { data } = await ai.run('@cf/baai/bge-large-en-v1.5', { text: [question] })
+	const values = data[0]
+
+	if (!values) {
+		return c.text("Failed to generate vector embedding", 500);
+	}
+
+	const inserted = await c.env.VECTOR_INDEX.upsert([
+		{
+			id: id.toString(),
+			values,
+		}
+	])
+
+	return c.text("updated", 201)
+})
+
+
 export default app
