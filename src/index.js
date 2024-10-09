@@ -11,7 +11,7 @@ app.get('/', async (c) => {
 		return c.text("Missing question", 400);
 	}
 
-	const embeddings = await ai.run('@cf/baai/bge-large-en-v1.5', { text: question })
+	const embeddings = await ai.run('@cf/baai/bge-large-en-v1.5', { text: question }) // text embedding model
 	const vectors = embeddings.data[0]
 
 	const SIMILARITY_CUTOFF = 1
@@ -33,7 +33,7 @@ app.get('/', async (c) => {
 		const systemPrompt = `Hello! I'm SwiftBot, your friendly chatbot, here to assist you. I'm designed to help answer questions, provide information, and even have a bit of fun. I'm here to make your experience as swift and enjoyable as possible. How can I assist you today?`;
 
 	const { response: answer } = await ai.run(
-		'@cf/meta/llama-3.1-8b-instruct',
+		'@cf/meta/llama-3.1-8b-instruct', // text-generation model
 		{
 			messages: [
 				...(answers.length ? [{ role: 'system', content: contextMessage }] : []),
