@@ -103,4 +103,41 @@ app.put("/embeds/:id", async (c) => {
 })
 
 
+
+app.post('/embeds', async (c) => {
+	const ai = new Ai(c.env.AI)
+
+	const { question, answer } = await c.req.json();
+	if (!question || !answer) {
+		return c.json("Missing question and/or answer", 400);
+	}
+
+	const { results } = await c.env.DB.prepare("INSERT INTO TABLE_NAME (question,answer) VALUES (?,?) RETURNING *")
+		.bind(question, answer)
+		.run()
+
+	const record = results.length ? results[0] : null
+
+	if (!record) {
+		return c.text("Failed to create table entry", 500);
+	}
+
+	const { data } = await ai.run('@cf/baai/bge-large-en-v1.5', { text: [question] })
+	const values = data[0]
+
+	if (!values) {
+		return c.text("Failed to generate vector embedding", 500);
+	}
+
+	const { id } = record
+	const inserted = await c.env.VECTOR_INDEX.upsert([
+		{
+			id: id.toString(),
+			values,
+		}
+	])
+
+	return c.json({ id, data: [question, answer], inserted }, 200)
+})
+
 export default app
